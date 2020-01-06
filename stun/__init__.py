@@ -93,6 +93,7 @@ RestricPortNAT = "Restric Port NAT"
 SymmetricNAT = "Symmetric NAT"
 ChangedAddressError = "Meet an error, when do Test1 on Changed IP and Port"
 
+FAMILY_TYPES = {1: "IPv4", 2: "IPv6"}
 
 
 def gen_transaction_id() -> str:
@@ -101,6 +102,35 @@ def gen_transaction_id() -> str:
 
 def b2a_hex(buffer: bytes) -> str:
     return binascii.b2a_hex(buffer).decode("ascii")
+
+
+def parse_address(buffer, offset):
+    # Parse MAPPED-ADDRESS, RESPONSE-ADDRESSS, CHANGED-ADDRESS, SOURCE-ADDRESS
+    # TODO(jlvillal): Support IPv6
+
+    # The first 4 bytes are the Type (2) and Length (2)
+    # The 5th byte is Reserved
+    # The 6th byte is the Family: 0x01 = IPv4, 0x02 = IPv6
+    # The remaining bytes are the IP address. 32 bits for IPv4 or 128 bits for
+    # IPv6.
+    # More info at: https://tools.ietf.org/html/rfc3489#section-11.2.1
+    # And at: https://tools.ietf.org/html/rfc5389#section-15.1
+    family = int(b2a_hex(buffer[offset + 5: offset + 6]), 16)
+    log.debug("family: %s (%s)", family, FAMILY_TYPES.get(family))
+    if family != 1:
+        raise ValueError("Family other than IPv4 not supported. "
+                         "Received family: {}".format(family))
+    port = int(b2a_hex(buffer[offset + 6 : offset + 8]), 16)
+    log.debug("port: %s", port)
+    ip = ".".join(
+        [
+            str(int(b2a_hex(buffer[offset + 8 : offset + 9]), 16)),
+            str(int(b2a_hex(buffer[offset + 9 : offset + 10]), 16)),
+            str(int(b2a_hex(buffer[offset + 10 : offset + 11]), 16)),
+            str(int(b2a_hex(buffer[offset + 11 : offset + 12]), 16)),
+        ]
+    )
+    return (ip, port)
 
 
 def stun_test(
@@ -172,41 +202,20 @@ def stun_test(
                 attr_len = int(b2a_hex(buf[(base + 2) : (base + 4)]), 16)
                 log.debug("attr_type: %s (%s)", attr_type, dictValToAttr.get(attr_type))
                 if attr_type == MappedAddress:
-                    port = int(b2a_hex(buf[base + 6 : base + 8]), 16)
-                    ip = ".".join(
-                        [
-                            str(int(b2a_hex(buf[base + 8 : base + 9]), 16)),
-                            str(int(b2a_hex(buf[base + 9 : base + 10]), 16)),
-                            str(int(b2a_hex(buf[base + 10 : base + 11]), 16)),
-                            str(int(b2a_hex(buf[base + 11 : base + 12]), 16)),
-                        ]
-                    )
+                    ip, port = parse_address(buf, base)
                     retVal["ExternalIP"] = ip
                     retVal["ExternalPort"] = port
-                if attr_type == SourceAddress:
-                    port = int(b2a_hex(buf[base + 6 : base + 8]), 16)
-                    ip = ".".join(
-                        [
-                            str(int(b2a_hex(buf[base + 8 : base + 9]), 16)),
-                            str(int(b2a_hex(buf[base + 9 : base + 10]), 16)),
-                            str(int(b2a_hex(buf[base + 10 : base + 11]), 16)),
-                            str(int(b2a_hex(buf[base + 11 : base + 12]), 16)),
-                        ]
-                    )
+                elif attr_type == SourceAddress:
+                    ip, port = parse_address(buf, base)
                     retVal["SourceIP"] = ip
                     retVal["SourcePort"] = port
-                if attr_type == ChangedAddress:
-                    port = int(b2a_hex(buf[base + 6 : base + 8]), 16)
-                    ip = ".".join(
-                        [
-                            str(int(b2a_hex(buf[base + 8 : base + 9]), 16)),
-                            str(int(b2a_hex(buf[base + 9 : base + 10]), 16)),
-                            str(int(b2a_hex(buf[base + 10 : base + 11]), 16)),
-                            str(int(b2a_hex(buf[base + 11 : base + 12]), 16)),
-                        ]
-                    )
+                elif attr_type == ChangedAddress:
+                    ip, port = parse_address(buf, base)
                     retVal["ChangedIP"] = ip
                     retVal["ChangedPort"] = port
+                else:
+                    log.debug("Unhandled attribute: %s %s", attr_type,
+                              dictValToAttr.get(attr_type))
                 # if attr_type == ServerName:
                 # serverName = buf[(base+4):(base+4+attr_len)]
                 base = base + 4 + attr_len
