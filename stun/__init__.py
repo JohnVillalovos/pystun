@@ -9,6 +9,11 @@ __version__ = "0.2.0"
 log = logging.getLogger("pystun")
 
 STUN_SERVERS = (
+    "stun.l.google.com:19302",
+    "stun1.l.google.com:19302",
+    "stun2.l.google.com:19302",
+    "stun3.l.google.com:19302",
+    "stun4.l.google.com:19302",
     "stun.ekiga.net",
     "stun.ideasip.com",
     "stun.voiparound.com",
@@ -220,6 +225,12 @@ def get_nat_type(
         resp = ret["Resp"]
     else:
         for stun_host in STUN_SERVERS:
+            if ':' in stun_host:
+                temp_host, temp_port = stun_host.split(':', 1)
+                stun_host = temp_host
+                port = int(temp_port)
+            else:
+                port = stun_port
             log.debug("Trying STUN host: %s", stun_host)
             ret = stun_test(
                 sock=sock,
