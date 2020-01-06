@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 import stun
 
 
-def main():
+def main()-> None:
     src = os.path.realpath(os.path.dirname(__file__))
     README = open(os.path.join(src, "README.rst")).read()
 
