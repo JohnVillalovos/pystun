@@ -2,6 +2,7 @@ import binascii
 import logging
 import random
 import socket
+from typing import Any, Dict, Optional, Tuple
 
 __version__ = "0.1.0"
 
@@ -102,8 +103,17 @@ def gen_tran_id():
 def b2a_hex(buffer):
     return binascii.b2a_hex(buffer).decode("ascii")
 
-def stun_test(sock, host, port, source_ip, source_port, send_data=""):
-    retVal = {
+
+def stun_test(
+    *,
+    sock: socket.socket,
+    host: str,
+    port: int,
+    source_ip: str,
+    source_port: int,
+    send_data: str = ""
+):
+    retVal: Dict[str, Any] = {
         "Resp": False,
         "ExternalIP": None,
         "ExternalPort": None,
@@ -193,18 +203,37 @@ def stun_test(sock, host, port, source_ip, source_port, send_data=""):
     return retVal
 
 
-def get_nat_type(s, source_ip, source_port, stun_host=None, stun_port=3478):
+def get_nat_type(
+    *,
+    sock: socket.socket,
+    source_ip: str,
+    source_port: int,
+    stun_host: Optional[str] = None,
+    stun_port: int = 3478
+):
     _initialize()
     port = stun_port
     log.debug("Do Test1")
     resp = False
     if stun_host:
-        ret = stun_test(s, stun_host, port, source_ip, source_port)
+        ret = stun_test(
+            sock=sock,
+            host=stun_host,
+            port=port,
+            source_ip=source_ip,
+            source_port=source_port,
+        )
         resp = ret["Resp"]
     else:
         for stun_host in stun_servers_list:
             log.debug("Trying STUN host: %s", stun_host)
-            ret = stun_test(s, stun_host, port, source_ip, source_port)
+            ret = stun_test(
+                sock=sock,
+                host=stun_host,
+                port=port,
+                source_ip=source_ip,
+                source_port=source_port,
+            )
             resp = ret["Resp"]
             if resp:
                 break
@@ -217,7 +246,14 @@ def get_nat_type(s, source_ip, source_port, stun_host=None, stun_port=3478):
     changedPort = ret["ChangedPort"]
     if ret["ExternalIP"] == source_ip:
         changeRequest = "".join([ChangeRequest, "0004", "00000006"])
-        ret = stun_test(s, stun_host, port, source_ip, source_port, changeRequest)
+        ret = stun_test(
+            sock=sock,
+            host=stun_host,
+            port=port,
+            source_ip=source_ip,
+            source_port=source_port,
+            send_data=changeRequest,
+        )
         if ret["Resp"]:
             typ = OpenInternet
         else:
@@ -225,13 +261,26 @@ def get_nat_type(s, source_ip, source_port, stun_host=None, stun_port=3478):
     else:
         changeRequest = "".join([ChangeRequest, "0004", "00000006"])
         log.debug("Do Test2")
-        ret = stun_test(s, stun_host, port, source_ip, source_port, changeRequest)
+        ret = stun_test(
+            sock=sock,
+            host=stun_host,
+            port=port,
+            source_ip=source_ip,
+            source_port=source_port,
+            send_data=changeRequest,
+        )
         log.debug("Result: %s", ret)
         if ret["Resp"]:
             typ = FullCone
         else:
             log.debug("Do Test1")
-            ret = stun_test(s, changedIP, changedPort, source_ip, source_port)
+            ret = stun_test(
+                sock=sock,
+                host=changedIP,
+                port=changedPort,
+                source_ip=source_ip,
+                source_port=source_port,
+            )
             log.debug("Result: %s", ret)
             if not ret["Resp"]:
                 typ = ChangedAddressError
@@ -240,7 +289,12 @@ def get_nat_type(s, source_ip, source_port, stun_host=None, stun_port=3478):
                     changePortRequest = "".join([ChangeRequest, "0004", "00000002"])
                     log.debug("Do Test3")
                     ret = stun_test(
-                        s, changedIP, port, source_ip, source_port, changePortRequest
+                        sock=sock,
+                        host=changedIP,
+                        port=port,
+                        source_ip=source_ip,
+                        source_port=source_port,
+                        send_data=changePortRequest,
                     )
                     log.debug("Result: %s", ret)
                     if ret["Resp"]:
@@ -252,13 +306,22 @@ def get_nat_type(s, source_ip, source_port, stun_host=None, stun_port=3478):
     return typ, ret
 
 
-def get_ip_info(source_ip="0.0.0.0", source_port=54320, stun_host=None, stun_port=3478):
+def get_ip_info(
+    source_ip: str = "0.0.0.0",
+    source_port: int = 54320,
+    stun_host: Optional[str] = None,
+    stun_port: int = 3478,
+) -> Tuple[str, str, int]:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.settimeout(2)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((source_ip, source_port))
         nat_type, nat = get_nat_type(
-            sock, source_ip, source_port, stun_host=stun_host, stun_port=stun_port
+            sock=sock,
+            source_ip=source_ip,
+            source_port=source_port,
+            stun_host=stun_host,
+            stun_port=stun_port,
         )
         external_ip = nat["ExternalIP"]
         external_port = nat["ExternalPort"]
