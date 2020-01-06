@@ -24,65 +24,78 @@ STUN_SERVERS = (
 
 DEFAULTS = {"stun_port": 3478, "source_ip": "0.0.0.0", "source_port": 54320}
 
-# stun attributes
-MappedAddress = "0001"
-ResponseAddress = "0002"
-ChangeRequest = "0003"
-SourceAddress = "0004"
-ChangedAddress = "0005"
-Username = "0006"
-Password = "0007"
-MessageIntegrity = "0008"
-ErrorCode = "0009"
-UnknownAttribute = "000A"
-ReflectedFrom = "000B"
-XorOnly = "0021"
-XorMappedAddress = "8020"
-ServerName = "8022"
-SecondaryAddress = "8050"  # Non standard extension
+# The STUN Message Types can take on the following values:
+#   0x0001  :  Binding Request
+#   0x0101  :  Binding Response
+#   0x0111  :  Binding Error Response
+#   0x0002  :  Shared Secret Request
+#   0x0102  :  Shared Secret Response
+#   0x0112  :  Shared Secret Error Response
+BIND_REQUEST_MSG = "0001"
+BIND_RESPONSE_MSG = "0101"
+BIND_ERROR_RESPONSE_MSG = "0111"
+SHARED_SECRET_REQUEST = "0002"
+SHARED_SECRET_RESPONSE = "0102"
+SHARED_SECRET_ERROR_RESPONSE = "0112"
 
-# types for a stun message
-BindRequestMsg = "0001"
-BindResponseMsg = "0101"
-BindErrorResponseMsg = "0111"
-SharedSecretRequestMsg = "0002"
-SharedSecretResponseMsg = "0102"
-SharedSecretErrorResponseMsg = "0112"
-
-dictAttrToVal = {
-    "MappedAddress": MappedAddress,
-    "ResponseAddress": ResponseAddress,
-    "ChangeRequest": ChangeRequest,
-    "SourceAddress": SourceAddress,
-    "ChangedAddress": ChangedAddress,
-    "Username": Username,
-    "Password": Password,
-    "MessageIntegrity": MessageIntegrity,
-    "ErrorCode": ErrorCode,
-    "UnknownAttribute": UnknownAttribute,
-    "ReflectedFrom": ReflectedFrom,
-    "XorOnly": XorOnly,
-    "XorMappedAddress": XorMappedAddress,
-    "ServerName": ServerName,
-    "SecondaryAddress": SecondaryAddress,
+MESSAGE_TYPES = {
+    BIND_REQUEST_MSG: "Binding Request",
+    BIND_RESPONSE_MSG: "Binding Response",
+    BIND_ERROR_RESPONSE_MSG: "Binding Error Response",
+    SHARED_SECRET_REQUEST: "Shared Secret Request",
+    SHARED_SECRET_RESPONSE: "Shared Secret Response",
+    SHARED_SECRET_ERROR_RESPONSE: "Shared Secret Error Response",
 }
 
-dictMsgTypeToVal = {
-    "BindRequestMsg": BindRequestMsg,
-    "BindResponseMsg": BindResponseMsg,
-    "BindErrorResponseMsg": BindErrorResponseMsg,
-    "SharedSecretRequestMsg": SharedSecretRequestMsg,
-    "SharedSecretResponseMsg": SharedSecretResponseMsg,
-    "SharedSecretErrorResponseMsg": SharedSecretErrorResponseMsg,
+# The following message attribute types are defined
+# https://tools.ietf.org/html/rfc3489#section-11.2
+#   0x0001: MAPPED-ADDRESS
+#   0x0002: RESPONSE-ADDRESS
+#   0x0003: CHANGE-REQUEST
+#   0x0004: SOURCE-ADDRESS
+#   0x0005: CHANGED-ADDRESS
+#   0x0006: USERNAME
+#   0x0007: PASSWORD
+#   0x0008: MESSAGE-INTEGRITY
+#   0x0009: ERROR-CODE
+#   0x000a: UNKNOWN-ATTRIBUTES
+#   0x000b: REFLECTED-FROM
+
+# STUN Message Attributes
+ATTR_MAPPED_ADDRESS = "0001"
+ATTR_RESPONSE_ADDRESS = "0002"
+ATTR_CHANGE_REQUEST = "0003"
+ATTR_SOURCE_ADDRESS = "0004"
+ATTR_CHANGE_ADDRESS = "0005"
+ATTR_USERNAME = "0006"
+ATTR_PASSWORD = "0007"
+ATTR_MESSAGE_INTEGRITY = "0008"
+ATTR_ERROR_CODE = "0009"
+ATTR_UNKNOWN_ATTRIBUTES = "000A"
+ATTR_REFLECTED_FROM = "000B"
+ATTR_XOR_MAPPED_ADDRESS = "0020"
+ATTR_XOR_ONLY = "0021"
+ATTR_SOFTWARE = "8022"
+ATTR_SECONDARY_ADDRESS = "8050"  # Non standard extension
+
+MESSAGE_ATTRIBUTES = {
+    ATTR_MAPPED_ADDRESS: "Mapped-Address",
+    ATTR_RESPONSE_ADDRESS: "Response-Address",
+    ATTR_CHANGE_REQUEST: "Change-Request",
+    ATTR_SOURCE_ADDRESS: "Source-Address",
+    ATTR_CHANGE_ADDRESS: "Changed-Address",
+    ATTR_USERNAME: "Username",
+    ATTR_PASSWORD: "Password",
+    ATTR_MESSAGE_INTEGRITY: "Message-Integrity",
+    ATTR_ERROR_CODE: "Error-Code",
+    ATTR_UNKNOWN_ATTRIBUTES: "Unknown-Attributes",
+    ATTR_REFLECTED_FROM: "Reflected-From",
+    ATTR_XOR_ONLY: "XorOnly",
+    ATTR_XOR_MAPPED_ADDRESS: "XorMappedAddress",
+    ATTR_SOFTWARE: "Software",
+    ATTR_SECONDARY_ADDRESS: "Secondary-Address",
 }
 
-dictValToMsgType = {}
-for key, value in dictMsgTypeToVal.items():
-    dictValToMsgType[value] = key
-
-dictValToAttr = {}
-for key, value in dictAttrToVal.items():
-    dictValToAttr[value] = key
 
 Blocked = "Blocked"
 OpenInternet = "Open Internet"
@@ -142,6 +155,7 @@ def stun_test(
     source_port: int,
     send_data: str = ""
 ) -> Dict[str, Any]:
+
     retVal: Dict[str, Any] = {
         "Resp": False,
         "ExternalIP": None,
@@ -155,7 +169,7 @@ def stun_test(
     log.debug("send_data: %s", (send_data))
     log.debug("str_len: %s", (str_len))
     transaction_id = gen_transaction_id()
-    str_data = "".join([BindRequestMsg, str_len, transaction_id, send_data])
+    str_data = "".join([BIND_REQUEST_MSG, str_len, transaction_id, send_data])
     log.debug("str_data: %s", (str_data))
     data = binascii.a2b_hex(str_data)
     recv_correct = False
@@ -192,10 +206,9 @@ def stun_test(
                     return retVal
         log.debug("buffer: %s", buf)
         msgtype = b2a_hex(buf[0:2])
-        log.debug("msgtype: %s (%s)", msgtype, dictValToMsgType.get(msgtype))
-        bind_resp_msg = (dictValToMsgType[msgtype] == "BindResponseMsg")
-        tranid_match = (transaction_id == b2a_hex(buf[4:20]).upper())
-        if bind_resp_msg and tranid_match:
+        log.debug("msgtype: %s (%s)", msgtype, MESSAGE_TYPES.get(msgtype))
+        tranid_match = transaction_id == b2a_hex(buf[4:20]).upper()
+        if msgtype == BIND_RESPONSE_MSG and tranid_match:
             recv_correct = True
             retVal["Resp"] = True
             len_message = int(b2a_hex(buf[2:4]), 16)
@@ -205,23 +218,28 @@ def stun_test(
             while len_remain:
                 attr_type = b2a_hex(buf[base : (base + 2)])
                 attr_len = int(b2a_hex(buf[(base + 2) : (base + 4)]), 16)
-                log.debug("attr_type: %s (%s)", attr_type, dictValToAttr.get(attr_type))
-                if attr_type == MappedAddress:
+                log.debug(
+                    "attr_type: %s (%s)", attr_type, MESSAGE_ATTRIBUTES.get(attr_type)
+                )
+                if attr_type == ATTR_MAPPED_ADDRESS:
                     ip, port = parse_address(buf, base)
                     retVal["ExternalIP"] = ip
                     retVal["ExternalPort"] = port
-                elif attr_type == SourceAddress:
+                elif attr_type == ATTR_SOURCE_ADDRESS:
                     ip, port = parse_address(buf, base)
                     retVal["SourceIP"] = ip
                     retVal["SourcePort"] = port
-                elif attr_type == ChangedAddress:
+                elif attr_type == ATTR_CHANGE_ADDRESS:
                     ip, port = parse_address(buf, base)
                     retVal["ChangedIP"] = ip
                     retVal["ChangedPort"] = port
                 else:
-                    log.debug("Unhandled attribute: %s %s", attr_type,
-                              dictValToAttr.get(attr_type))
-                # if attr_type == ServerName:
+                    if int(attr_type, 16) > 0x7FFF:
+                        msg = "Unhandled optional attribute: %s %s"
+                    else:
+                        msg = "Unhandled attribute: %s %s"
+                    log.debug(msg, attr_type, MESSAGE_ATTRIBUTES.get(attr_type))
+                # if attr_type == ATTR_SOFTWARE
                 # serverName = buf[(base+4):(base+4+attr_len)]
                 base = base + 4 + attr_len
                 len_remain = len_remain - (4 + attr_len)
@@ -275,7 +293,7 @@ def get_nat_type(
     changed_ip = ret["ChangedIP"]
     changed_port = ret["ChangedPort"]
     if ret["ExternalIP"] == source_ip:
-        change_request = "".join([ChangeRequest, "0004", "00000006"])
+        change_request = "".join([ATTR_CHANGE_REQUEST, "0004", "00000006"])
         ret = stun_test(
             sock=sock,
             host=stun_host,
@@ -289,7 +307,7 @@ def get_nat_type(
         else:
             typ = SymmetricUDPFirewall
     else:
-        change_request = "".join([ChangeRequest, "0004", "00000006"])
+        change_request = "".join([ATTR_CHANGE_REQUEST, "0004", "00000006"])
         log.debug("Do Test2")
         ret = stun_test(
             sock=sock,
@@ -319,7 +337,9 @@ def get_nat_type(
                     external_ip == ret["ExternalIP"]
                     and external_port == ret["ExternalPort"]
                 ):
-                    change_port_request = "".join([ChangeRequest, "0004", "00000002"])
+                    change_port_request = "".join(
+                        [ATTR_CHANGE_REQUEST, "0004", "00000002"]
+                    )
                     log.debug("Do Test3")
                     ret = stun_test(
                         sock=sock,
