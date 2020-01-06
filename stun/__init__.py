@@ -100,7 +100,7 @@ def gen_tran_id():
 
 
 def b2a_hex(buffer):
-    return binascii.b2a_hex(buffer).decode('ascii')
+    return binascii.b2a_hex(buffer).decode("ascii")
 
 def stun_test(sock, host, port, source_ip, source_port, send_data=""):
     retVal = {
