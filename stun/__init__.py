@@ -190,7 +190,6 @@ def stun_test(sock, host, port, source_ip, source_port, send_data=""):
                 # serverName = buf[(base+4):(base+4+attr_len)]
                 base = base + 4 + attr_len
                 len_remain = len_remain - (4 + attr_len)
-    # s.close()
     return retVal
 
 
@@ -254,14 +253,13 @@ def get_nat_type(s, source_ip, source_port, stun_host=None, stun_port=3478):
 
 
 def get_ip_info(source_ip="0.0.0.0", source_port=54320, stun_host=None, stun_port=3478):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(2)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind((source_ip, source_port))
-    nat_type, nat = get_nat_type(
-        s, source_ip, source_port, stun_host=stun_host, stun_port=stun_port
-    )
-    external_ip = nat["ExternalIP"]
-    external_port = nat["ExternalPort"]
-    s.close()
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.settimeout(2)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind((source_ip, source_port))
+        nat_type, nat = get_nat_type(
+            sock, source_ip, source_port, stun_host=stun_host, stun_port=stun_port
+        )
+        external_ip = nat["ExternalIP"]
+        external_port = nat["ExternalPort"]
     return (nat_type, external_ip, external_port)
