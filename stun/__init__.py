@@ -106,7 +106,7 @@ RestricPortNAT = "Restric Port NAT"
 SymmetricNAT = "Symmetric NAT"
 ChangedAddressError = "Meet an error, when do Test1 on Changed IP and Port"
 
-FAMILY_TYPES = {1: "IPv4", 2: "IPv6"}
+IP_FAMILY_TYPES = {1: "IPv4", 2: "IPv6"}
 
 
 def gen_transaction_id() -> str:
@@ -128,11 +128,13 @@ def parse_address(buffer, offset):
     # IPv6.
     # More info at: https://tools.ietf.org/html/rfc3489#section-11.2.1
     # And at: https://tools.ietf.org/html/rfc5389#section-15.1
-    family = int(b2a_hex(buffer[offset + 5: offset + 6]), 16)
-    log.debug("family: %s (%s)", family, FAMILY_TYPES.get(family))
+    family = int(b2a_hex(buffer[offset + 5 : offset + 6]), 16)
+    log.debug("family: %s (%s)", family, IP_FAMILY_TYPES.get(family))
     if family != 1:
-        raise ValueError("Family other than IPv4 not supported. "
-                         "Received family: {}".format(family))
+        raise ValueError(
+            "Family other than IPv4 not supported. "
+            "Received family: {}".format(family)
+        )
     port = int(b2a_hex(buffer[offset + 6 : offset + 8]), 16)
     log.debug("port: %s", port)
     ip = ".".join(
