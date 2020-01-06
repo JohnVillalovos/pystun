@@ -1,15 +1,8 @@
-.. image:: https://travis-ci.org/jtriley/pystun.svg?branch=master
-    :target: https://travis-ci.org/jtriley/pystun
-
-.. image:: https://coveralls.io/repos/jtriley/pystun/badge.png
-   :target: https://coveralls.io/r/jtriley/pystun
-
-
 PyStun
 ======
-A Python STUN client for getting NAT type and external IP
+A Python 3.6 or greater STUN client for getting NAT type and external IP
 
-This is a fork of pystun originally created by gaohawk (http://code.google.com/p/pystun/)
+This is a fork of pystun: https://github.com/jtriley/pystun
 
 PyStun follows RFC 3489: http://www.ietf.org/rfc/rfc3489.txt
 
@@ -20,7 +13,7 @@ Installation
 ------------
 To install the latest version::
 
-    $ pip install pystun
+    $ pip install git+https://github.com/JohnVillalovos/pystun
 
 or download/clone the source and install manually using::
 
