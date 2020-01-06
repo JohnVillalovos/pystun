@@ -1,4 +1,5 @@
 import os.path
+
 from setuptools import setup, find_packages
 
 import stun
@@ -17,7 +18,8 @@ def main() -> None:
         author="Justin Riley (original author: gaohawk)",
         author_email="justin.t.riley@gmail.com",
         url="http://github.com/jtriley/pystun",
-        description="A Python STUN client for getting NAT type and external IP (RFC 3489)",
+        description=("A Python STUN client for getting NAT type and external IP "
+                     "(RFC 3489)"),
         long_description=README,
         keywords="STUN NAT",
         classifiers=[
