@@ -14,13 +14,13 @@ class TestCLI(unittest.TestCase):
     stun_host: str
 
     @classmethod
-    def setUpClass(cls)-> None:
+    def setUpClass(cls) -> None:
         cls.source_ip = "123.45.67.89"
         cls.source_port = 24816
         cls.stun_port = 13579
         cls.stun_host = "stun.stub.org"
 
-    def test_cli_parser_default(self)-> None:
+    def test_cli_parser_default(self) -> None:
         parser = cli.make_argument_parser()
         options = parser.parse_args([])
 
@@ -29,7 +29,7 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(options.stun_port, stun.DEFAULTS["stun_port"])
         self.assertIsNone(options.stun_host)
 
-    def test_cli_parser_user_long_form(self)-> None:
+    def test_cli_parser_user_long_form(self) -> None:
         parser = cli.make_argument_parser()
         options = parser.parse_args(
             [
@@ -51,7 +51,7 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(options.stun_host, self.stun_host)
         self.assertEqual(options.stun_port, self.stun_port)
 
-    def test_cli_parser_user_short_form(self)-> None:
+    def test_cli_parser_user_short_form(self) -> None:
         parser = cli.make_argument_parser()
         options = parser.parse_args(
             [

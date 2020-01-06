@@ -6,7 +6,7 @@ import sys
 import stun
 
 
-def make_argument_parser()-> argparse.ArgumentParser:
+def make_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -41,7 +41,7 @@ def make_argument_parser()-> argparse.ArgumentParser:
     return parser
 
 
-def main()-> int:
+def main() -> int:
     try:
         options = make_argument_parser().parse_args()
 
