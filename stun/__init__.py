@@ -4,7 +4,7 @@ import random
 import socket
 from typing import Any, Dict, Optional, Tuple
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 log = logging.getLogger("pystun")
 
@@ -16,8 +16,6 @@ STUN_SERVERS = (
     "stun.voipstunt.com",
     "stun.voxgratia.org",
 )
-
-stun_servers_list = STUN_SERVERS
 
 DEFAULTS = {"stun_port": 3478, "source_ip": "0.0.0.0", "source_port": 54320}
 
@@ -126,8 +124,8 @@ def stun_test(
     tranid = gen_tran_id()
     str_data = "".join([BindRequestMsg, str_len, tranid, send_data])
     data = binascii.a2b_hex(str_data)
-    recvCorr = False
-    while not recvCorr:
+    recv_correct = False
+    while not recv_correct:
         recieved = False
         count = 3
         while not recieved:
@@ -152,7 +150,7 @@ def stun_test(
         bind_resp_msg = dictValToMsgType[msgtype] == "BindResponseMsg"
         tranid_match = tranid == b2a_hex(buf[4:20]).upper()
         if bind_resp_msg and tranid_match:
-            recvCorr = True
+            recv_correct = True
             retVal["Resp"] = True
             len_message = int(b2a_hex(buf[2:4]), 16)
             len_remain = len_message
@@ -225,7 +223,7 @@ def get_nat_type(
         )
         resp = ret["Resp"]
     else:
-        for stun_host in stun_servers_list:
+        for stun_host in STUN_SERVERS:
             log.debug("Trying STUN host: %s", stun_host)
             ret = stun_test(
                 sock=sock,
@@ -240,26 +238,26 @@ def get_nat_type(
     if not resp:
         return Blocked, ret
     log.debug("Result: %s", ret)
-    exIP = ret["ExternalIP"]
-    exPort = ret["ExternalPort"]
-    changedIP = ret["ChangedIP"]
-    changedPort = ret["ChangedPort"]
+    external_ip = ret["ExternalIP"]
+    external_port = ret["ExternalPort"]
+    changed_ip = ret["ChangedIP"]
+    changed_port = ret["ChangedPort"]
     if ret["ExternalIP"] == source_ip:
-        changeRequest = "".join([ChangeRequest, "0004", "00000006"])
+        change_request = "".join([ChangeRequest, "0004", "00000006"])
         ret = stun_test(
             sock=sock,
             host=stun_host,
             port=port,
             source_ip=source_ip,
             source_port=source_port,
-            send_data=changeRequest,
+            send_data=change_request,
         )
         if ret["Resp"]:
             typ = OpenInternet
         else:
             typ = SymmetricUDPFirewall
     else:
-        changeRequest = "".join([ChangeRequest, "0004", "00000006"])
+        change_request = "".join([ChangeRequest, "0004", "00000006"])
         log.debug("Do Test2")
         ret = stun_test(
             sock=sock,
@@ -267,7 +265,7 @@ def get_nat_type(
             port=port,
             source_ip=source_ip,
             source_port=source_port,
-            send_data=changeRequest,
+            send_data=change_request,
         )
         log.debug("Result: %s", ret)
         if ret["Resp"]:
@@ -276,8 +274,8 @@ def get_nat_type(
             log.debug("Do Test1")
             ret = stun_test(
                 sock=sock,
-                host=changedIP,
-                port=changedPort,
+                host=changed_ip,
+                port=changed_port,
                 source_ip=source_ip,
                 source_port=source_port,
             )
@@ -285,16 +283,19 @@ def get_nat_type(
             if not ret["Resp"]:
                 typ = ChangedAddressError
             else:
-                if exIP == ret["ExternalIP"] and exPort == ret["ExternalPort"]:
-                    changePortRequest = "".join([ChangeRequest, "0004", "00000002"])
+                if (
+                    external_ip == ret["ExternalIP"]
+                    and external_port == ret["ExternalPort"]
+                ):
+                    change_port_request = "".join([ChangeRequest, "0004", "00000002"])
                     log.debug("Do Test3")
                     ret = stun_test(
                         sock=sock,
-                        host=changedIP,
+                        host=changed_ip,
                         port=port,
                         source_ip=source_ip,
                         source_port=source_port,
-                        send_data=changePortRequest,
+                        send_data=change_port_request,
                     )
                     log.debug("Result: %s", ret)
                     if ret["Resp"]:
