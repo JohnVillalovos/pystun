@@ -72,8 +72,12 @@ dictMsgTypeToVal = {
 }
 
 dictValToMsgType = {}
+for key, value in dictMsgTypeToVal.items():
+    dictValToMsgType[value] = key
 
 dictValToAttr = {}
+for key, value in dictAttrToVal.items():
+    dictValToAttr[value] = key
 
 Blocked = "Blocked"
 OpenInternet = "Open Internet"
@@ -83,13 +87,6 @@ RestricNAT = "Restric NAT"
 RestricPortNAT = "Restric Port NAT"
 SymmetricNAT = "Symmetric NAT"
 ChangedAddressError = "Meet an error, when do Test1 on Changed IP and Port"
-
-
-def _initialize() -> None:
-    for key, value in dictAttrToVal.items():
-        dictValToAttr[value] = key
-    for key, value in dictMsgTypeToVal.items():
-        dictValToMsgType[value] = key
 
 
 def gen_tran_id() -> str:
@@ -209,7 +206,6 @@ def get_nat_type(
     stun_host: Optional[str] = None,
     stun_port: int = 3478
 ) -> Tuple[str, Dict[str, Any]]:
-    _initialize()
     port = stun_port
     log.debug("Do Test1")
     resp = False
