@@ -109,10 +109,10 @@ MESSAGE_ATTRIBUTES = {
 
 Blocked = "Blocked"
 OpenInternet = "Open Internet"
-FullCone = "Full Cone"
+FullCone = "Full Cone NAT"
 SymmetricUDPFirewall = "Symmetric UDP Firewall"
-RestricNAT = "Restric NAT"
-RestricPortNAT = "Restric Port NAT"
+RestricNAT = "Restricted NAT"
+RestricPortNAT = "Restricted Port NAT"
 SymmetricNAT = "Symmetric NAT"
 ChangedAddressError = "Meet an error, when do Test1 on Changed IP and Port"
 
