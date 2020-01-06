@@ -183,8 +183,13 @@ def stun_test(
                     retVal["Resp"] = False
                     return retVal
             except Exception as exc:
-                raise
-                log.debug("recvfrom Exception: %s", exc)
+                log.error("recvfrom Exception: %s", exc)
+                received = False
+                if count > 0:
+                    count -= 1
+                else:
+                    retVal["Resp"] = False
+                    return retVal
         log.debug("buffer: %s", buf)
         msgtype = b2a_hex(buf[0:2])
         log.debug("msgtype: %s (%s)", msgtype, dictValToMsgType.get(msgtype))
