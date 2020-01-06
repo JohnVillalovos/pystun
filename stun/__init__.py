@@ -28,7 +28,11 @@ STUN_SERVERS = (
     "stun.voxgratia.org",
 )
 
-DEFAULTS = {"stun_port": 3478, "source_ip": "0.0.0.0", "source_port": 54320}
+DEFAULTS: Dict[str, Any] = {
+    "stun_port": 3478,
+    "source_ip": "0.0.0.0",
+    "source_port": 54320,
+}
 
 # The STUN Message Types can take on the following values:
 #   0x0001  :  Binding Request
@@ -262,7 +266,7 @@ def get_nat_type(
     source_ip: str,
     source_port: int,
     stun_host: Optional[str] = None,
-    stun_port: int = 3478
+    stun_port: int = DEFAULTS["stun_port"],
 ) -> Tuple[str, Dict[str, Any]]:
     port = stun_port
     log.debug("Do Test1")
@@ -370,10 +374,10 @@ def get_nat_type(
 
 
 def get_ip_info(
-    source_ip: str = "0.0.0.0",
-    source_port: int = 54320,
+    source_ip: str = DEFAULTS["source_ip"],
+    source_port: int = DEFAULTS["source_port"],
     stun_host: Optional[str] = None,
-    stun_port: int = 3478,
+    stun_port: int = DEFAULTS["stun_port"],
 ) -> Tuple[str, str, int]:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.settimeout(2)
