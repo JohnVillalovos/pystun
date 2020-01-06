@@ -87,12 +87,10 @@ ChangedAddressError = "Meet an error, when do Test1 on Changed IP and Port"
 
 
 def _initialize():
-    items = dictAttrToVal.items()
-    for i in range(len(items)):
-        dictValToAttr.update({items[i][1]: items[i][0]})
-    items = dictMsgTypeToVal.items()
-    for i in range(len(items)):
-        dictValToMsgType.update({items[i][1]: items[i][0]})
+    for key, value in dictAttrToVal.items():
+        dictValToAttr[value] = key
+    for key, value in dictMsgTypeToVal.items():
+        dictValToMsgType[value] = key
 
 
 def gen_tran_id():
