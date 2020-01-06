@@ -94,10 +94,9 @@ SymmetricNAT = "Symmetric NAT"
 ChangedAddressError = "Meet an error, when do Test1 on Changed IP and Port"
 
 
-def gen_tran_id() -> str:
-    a = "".join(random.choice("0123456789ABCDEF") for i in range(32))
-    # return binascii.a2b_hex(a)
-    return a
+
+def gen_transaction_id() -> str:
+    return "".join(random.choice("0123456789ABCDEF") for i in range(32))
 
 
 def b2a_hex(buffer: bytes) -> str:
@@ -123,43 +122,55 @@ def stun_test(
         "ChangedPort": None,
     }
     str_len = "%#04d" % (len(send_data) / 2)
-    tranid = gen_tran_id()
-    str_data = "".join([BindRequestMsg, str_len, tranid, send_data])
+    log.debug("send_data: %s", (send_data))
+    log.debug("str_len: %s", (str_len))
+    transaction_id = gen_transaction_id()
+    str_data = "".join([BindRequestMsg, str_len, transaction_id, send_data])
+    log.debug("str_data: %s", (str_data))
     data = binascii.a2b_hex(str_data)
     recv_correct = False
     while not recv_correct:
-        recieved = False
+        received = False
         count = 3
-        while not recieved:
+        while not received:
             log.debug("sendto: %s", (host, port))
             try:
                 sock.sendto(data, (host, port))
             except socket.gaierror:
+                log.debug("sendto gaierror: %s", (host, port))
                 retVal["Resp"] = False
                 return retVal
             try:
                 buf, addr = sock.recvfrom(2048)
                 log.debug("recvfrom: %s", addr)
-                recieved = True
-            except Exception:
-                recieved = False
+                received = True
+            except socket.timeout as exc:
+                log.debug("recvfrom Exception: %s", exc)
+                received = False
                 if count > 0:
                     count -= 1
                 else:
                     retVal["Resp"] = False
                     return retVal
+            except Exception as exc:
+                raise
+                log.debug("recvfrom Exception: %s", exc)
+        log.debug("buffer: %s", buf)
         msgtype = b2a_hex(buf[0:2])
-        bind_resp_msg = dictValToMsgType[msgtype] == "BindResponseMsg"
-        tranid_match = tranid == b2a_hex(buf[4:20]).upper()
+        log.debug("msgtype: %s (%s)", msgtype, dictValToMsgType.get(msgtype))
+        bind_resp_msg = (dictValToMsgType[msgtype] == "BindResponseMsg")
+        tranid_match = (transaction_id == b2a_hex(buf[4:20]).upper())
         if bind_resp_msg and tranid_match:
             recv_correct = True
             retVal["Resp"] = True
             len_message = int(b2a_hex(buf[2:4]), 16)
+            log.debug("len_message: %s", len_message)
             len_remain = len_message
             base = 20
             while len_remain:
                 attr_type = b2a_hex(buf[base : (base + 2)])
                 attr_len = int(b2a_hex(buf[(base + 2) : (base + 4)]), 16)
+                log.debug("attr_type: %s (%s)", attr_type, dictValToAttr.get(attr_type))
                 if attr_type == MappedAddress:
                     port = int(b2a_hex(buf[base + 6 : base + 8]), 16)
                     ip = ".".join(
