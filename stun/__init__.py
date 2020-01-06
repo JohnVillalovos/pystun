@@ -134,23 +134,24 @@ def parse_address(buffer: bytes, offset: int) -> Tuple[str, int]:
     # IPv6.
     # More info at: https://tools.ietf.org/html/rfc3489#section-11.2.1
     # And at: https://tools.ietf.org/html/rfc5389#section-15.1
-    family = int(b2a_hex(buffer[offset + 5 : offset + 6]), 16)
+    family = int(buffer[offset + 5])
     log.debug("family: %s (%s)", family, IP_FAMILY_TYPES.get(family))
     if family != 1:
         raise ValueError(
             "Family other than IPv4 not supported. "
             "Received family: {}".format(family)
         )
-    port = int(b2a_hex(buffer[offset + 6 : offset + 8]), 16)
+    port = int.from_bytes(buffer[offset + 6 : offset + 8], byteorder="big")
     log.debug("port: %s", port)
     ip = ".".join(
         [
-            str(int(b2a_hex(buffer[offset + 8 : offset + 9]), 16)),
-            str(int(b2a_hex(buffer[offset + 9 : offset + 10]), 16)),
-            str(int(b2a_hex(buffer[offset + 10 : offset + 11]), 16)),
-            str(int(b2a_hex(buffer[offset + 11 : offset + 12]), 16)),
+            str(int(buffer[offset + 8])),
+            str(int(buffer[offset + 9])),
+            str(int(buffer[offset + 10])),
+            str(int(buffer[offset + 11])),
         ]
     )
+    log.debug("ip: %s", ip)
     return (ip, port)
 
 
@@ -219,16 +220,17 @@ def stun_test(
         if msgtype == BIND_RESPONSE_MSG and tranid_match:
             recv_correct = True
             retVal["Resp"] = True
-            len_message = int(b2a_hex(buf[2:4]), 16)
+            len_message = int.from_bytes(buf[2:4], byteorder="big")
             log.debug("len_message: %s", len_message)
             len_remain = len_message
             base = 20
             while len_remain:
                 attr_type = b2a_hex(buf[base : (base + 2)])
-                attr_len = int(b2a_hex(buf[(base + 2) : (base + 4)]), 16)
                 log.debug(
                     "attr_type: %s (%s)", attr_type, MESSAGE_ATTRIBUTES.get(attr_type)
                 )
+                attr_len = int.from_bytes(buf[(base + 2) : (base + 4)], byteorder="big")
+                log.debug("attr_len: %s", attr_len)
                 if attr_type == ATTR_MAPPED_ADDRESS:
                     ip, port = parse_address(buf, base)
                     retVal["ExternalIP"] = ip
