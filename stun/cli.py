@@ -6,7 +6,7 @@ import sys
 import stun
 
 
-def make_argument_parser():
+def make_argument_parser()-> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -41,7 +41,7 @@ def make_argument_parser():
     return parser
 
 
-def main():
+def main()-> int:
     try:
         options = make_argument_parser().parse_args()
 
@@ -59,8 +59,9 @@ def main():
         print("External IP:", external_ip)
         print("External Port:", external_port)
     except KeyboardInterrupt:
-        sys.exit()
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
