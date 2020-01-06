@@ -87,20 +87,20 @@ SymmetricNAT = "Symmetric NAT"
 ChangedAddressError = "Meet an error, when do Test1 on Changed IP and Port"
 
 
-def _initialize():
+def _initialize()-> None:
     for key, value in dictAttrToVal.items():
         dictValToAttr[value] = key
     for key, value in dictMsgTypeToVal.items():
         dictValToMsgType[value] = key
 
 
-def gen_tran_id():
+def gen_tran_id()-> str:
     a = "".join(random.choice("0123456789ABCDEF") for i in range(32))
     # return binascii.a2b_hex(a)
     return a
 
 
-def b2a_hex(buffer):
+def b2a_hex(buffer:bytes)-> str:
     return binascii.b2a_hex(buffer).decode("ascii")
 
 
@@ -112,7 +112,7 @@ def stun_test(
     source_ip: str,
     source_port: int,
     send_data: str = ""
-):
+)-> Dict[str, Any]:
     retVal: Dict[str, Any] = {
         "Resp": False,
         "ExternalIP": None,
@@ -210,7 +210,7 @@ def get_nat_type(
     source_port: int,
     stun_host: Optional[str] = None,
     stun_port: int = 3478
-):
+)-> Tuple[str, Dict[str, Any]]:
     _initialize()
     port = stun_port
     log.debug("Do Test1")
