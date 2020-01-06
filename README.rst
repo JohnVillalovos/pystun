@@ -6,6 +6,8 @@ This is a fork of pystun: https://github.com/jtriley/pystun
 
 PyStun follows RFC 3489: http://www.ietf.org/rfc/rfc3489.txt
 
+It does *NOT* support RFC 5389
+
 A server following STUN-bis hasn't been found on internet so RFC3489 is the
 only implementation.
 
