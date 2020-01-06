@@ -160,13 +160,7 @@ def parse_address(buffer: bytes, offset: int) -> Tuple[str, int]:
 
 
 def stun_test(
-    *,
-    sock: socket.socket,
-    host: str,
-    port: int,
-    source_ip: str,
-    source_port: int,
-    send_data: str = ""
+    *, sock: socket.socket, host: str, port: int, send_data: str = ""
 ) -> Dict[str, Any]:
 
     retVal: Dict[str, Any] = {
@@ -272,13 +266,7 @@ def get_nat_type(
     log.debug("Do Test1")
     resp = False
     if stun_host:
-        ret = stun_test(
-            sock=sock,
-            host=stun_host,
-            port=port,
-            source_ip=source_ip,
-            source_port=source_port,
-        )
+        ret = stun_test(sock=sock, host=stun_host, port=port,)
         resp = ret["Resp"]
     else:
         for stun_host in STUN_SERVERS:
@@ -289,13 +277,7 @@ def get_nat_type(
             else:
                 port = stun_port
             log.debug("Trying STUN host: %s", stun_host)
-            ret = stun_test(
-                sock=sock,
-                host=stun_host,
-                port=port,
-                source_ip=source_ip,
-                source_port=source_port,
-            )
+            ret = stun_test(sock=sock, host=stun_host, port=port,)
             resp = ret["Resp"]
             if resp:
                 break
@@ -306,43 +288,29 @@ def get_nat_type(
     external_port = ret["ExternalPort"]
     changed_ip = ret["ChangedIP"]
     changed_port = ret["ChangedPort"]
-    if ret["ExternalIP"] == source_ip:
+    if external_ip == source_ip:
+        log.debug("external_ip == source_ip")
+        log.debug("Change Request Test")
+        # 6 = Change IP and Port
         change_request = "".join([ATTR_CHANGE_REQUEST, "0004", "00000006"])
-        ret = stun_test(
-            sock=sock,
-            host=stun_host,
-            port=port,
-            source_ip=source_ip,
-            source_port=source_port,
-            send_data=change_request,
-        )
+        ret = stun_test(sock=sock, host=stun_host, port=port, send_data=change_request,)
+        log.debug("change_request result: %s", ret)
         if ret["Resp"]:
             typ = OpenInternet
         else:
             typ = SymmetricUDPFirewall
     else:
+        log.debug("external_ip != source_ip")
+        # 6 = Change IP and Port
         change_request = "".join([ATTR_CHANGE_REQUEST, "0004", "00000006"])
-        log.debug("Do Test2")
-        ret = stun_test(
-            sock=sock,
-            host=stun_host,
-            port=port,
-            source_ip=source_ip,
-            source_port=source_port,
-            send_data=change_request,
-        )
-        log.debug("Result: %s", ret)
+        log.debug("Change Request Test")
+        ret = stun_test(sock=sock, host=stun_host, port=port, send_data=change_request,)
+        log.debug("change_request result: %s", ret)
         if ret["Resp"]:
             typ = FullCone
         else:
-            log.debug("Do Test1")
-            ret = stun_test(
-                sock=sock,
-                host=changed_ip,
-                port=changed_port,
-                source_ip=source_ip,
-                source_port=source_port,
-            )
+            log.debug("change_request failed")
+            ret = stun_test(sock=sock, host=changed_ip, port=changed_port,)
             log.debug("Result: %s", ret)
             if not ret["Resp"]:
                 typ = ChangedAddressError
@@ -351,6 +319,7 @@ def get_nat_type(
                     external_ip == ret["ExternalIP"]
                     and external_port == ret["ExternalPort"]
                 ):
+                    # 2 = Change Port
                     change_port_request = "".join(
                         [ATTR_CHANGE_REQUEST, "0004", "00000002"]
                     )
@@ -359,8 +328,6 @@ def get_nat_type(
                         sock=sock,
                         host=changed_ip,
                         port=port,
-                        source_ip=source_ip,
-                        source_port=source_port,
                         send_data=change_port_request,
                     )
                     log.debug("Result: %s", ret)
