@@ -2,7 +2,7 @@
 *.pkl
 *.pyc
 *.swp
-pystun.egg-info
+stun.egg-info
 build
 dist
 env/

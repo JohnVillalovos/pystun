@@ -1,32 +1,34 @@
 import os.path
 
-from setuptools import setup, find_packages
+import setuptools
 
 import stun
 
 
 def main() -> None:
     src = os.path.realpath(os.path.dirname(__file__))
-    README = open(os.path.join(src, "README.rst")).read()
+    readme = open(os.path.join(src, "README.rst")).read()
 
-    setup(
-        name="pystun",
+    setuptools.setup(
+        name="stun",
         version=stun.__version__,
-        packages=find_packages(),
+        packages=setuptools.find_packages(),
         zip_safe=False,
         license="MIT",
-        author="Justin Riley (original author: gaohawk)",
-        author_email="justin.t.riley@gmail.com",
-        url="http://github.com/jtriley/pystun",
-        description=("A Python STUN client for getting NAT type and external IP "
-                     "(RFC 3489)"),
-        long_description=README,
+        author="John L. Villalovos",
+        author_email="john@sodarock.com",
+        url="https://github.com/JohnVillalovos/pystun",
+        description=(
+            "A Python STUN client for getting NAT type and external IP (RFC 3489)"
+        ),
+        long_description=readme,
         keywords="STUN NAT",
         classifiers=[
             "Development Status :: 4 - Beta",
             "License :: OSI Approved :: MIT License",
-            "Programming Language :: Python :: 2",
-            "Programming Language :: Python :: 2.7",
+            "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3.6",
+            "Programming Language :: Python :: 3.7",
             "Topic :: Internet",
             "Topic :: System :: Networking :: Firewalls",
         ],
