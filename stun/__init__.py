@@ -2,7 +2,7 @@ import binascii
 import logging
 import random
 import socket
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple  # noqa
 
 # NOTES:
 # This only supports RFC 3489
